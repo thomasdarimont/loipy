@@ -2,6 +2,7 @@ import json
 import pickle
 from typing import Dict, List, Tuple
 from urllib.parse import urlencode
+from base64 import b64encode
 
 import flask
 import yes
@@ -18,6 +19,10 @@ from pyop.exceptions import (
 from pyop.util import should_fragment_encode
 
 yes_proxy_views = Blueprint("yes_proxy", __name__, url_prefix="")
+
+
+def make_userid(sub, iss):
+    return json.dumps((sub, iss))
 
 
 def map_scope(scopes: List) -> Tuple[Dict, bool]:
@@ -106,9 +111,11 @@ def oidc_callback():
     finally:
         session["yes"] = pickle.dumps(yessession)
 
-    yesflow.send_token_request()
+    data_id_token = yesflow.send_token_request()
     data_userinfo = yesflow.send_userinfo_request()
-    userid = data_userinfo["sub"]
+    userid = make_userid(data_userinfo["sub"], data_id_token["iss"])
+    
+    data_userinfo['sub'] = userid
 
     current_app.redis_client.set(
         userid,

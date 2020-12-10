@@ -7,6 +7,9 @@ log_level: DEBUG
 # background information.
 iss: "https://example.com/"
 
+# Secret key for signing ID tokens (in PEM format).
+private_key: key.pem
+
 # yes® client configuration. See https://github.com/yescom/pyes for details.
 "yes":
   environment: "sandbox"
@@ -19,11 +22,11 @@ iss: "https://example.com/"
 # https://flask.palletsprojects.com/en/1.1.x/config/ for details.
 flask:
   SERVER_NAME: "example.com"
-  SECRET_KEY:  # Configure a secret key here, see flask config!
+  SECRET_KEY: # Configure a secret key here, see flask config!
   SESSION_COOKIE_NAME: "yesproxysession"
   SUBJECT_ID_HASH_SALT: TODO
   PREFERRED_URL_SCHEME: "http"
-  REDIS_URL: "redis://localhost:6379/0"  # Redis URL to cache user data
+  REDIS_URL: "redis://localhost:6379/0" # Redis URL to cache user data
 
 # OpenID Connect client configuration.
 # See https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata for keys/values.
@@ -31,7 +34,7 @@ clients:
   test: # = client ID
     client_secret: some_secret_for_your_client
     redirect_uris:
-      - https://example.com/oidc/redirect  # Redirect URI of your legacy OIDC relying party
+      - https://example.com/oidc/redirect # Redirect URI of your legacy OIDC relying party
     response_types:
       - code
     token_endpoint_auth_method: client_secret_post
@@ -44,18 +47,18 @@ user_data_expiration_seconds: 300
 # IDP. See the yes® developer documentation for details.
 scope_to_claims_mapping:
   testscope:
-    {
-      "https://www.yes.com/claims/preferred_iban": null,
-      "verified_claims":
-        {
-          "verification": { "trust_framework": { "value": "de_aml" } },
-          "claims":
-            { "given_name": null, "family_name": null, "birthdate": null },
-        },
-    }
+    "https://www.yes.com/claims/preferred_iban":
+    "verified_claims":
+      "verification":
+        "trust_framework":
+          "value": "de_aml"
+      "claims":
+        "given_name":
+        "family_name":
+        "birthdate":
 
 # List of scopes that the proxy should accept and whether to request "Strong
 # Customer Authentication" from the bank for the respective scope. See the yes®
 # developer documentation on `acr_values` for details.
 scope_to_sca_mapping:
-  testscope: True
+  testscope: yes

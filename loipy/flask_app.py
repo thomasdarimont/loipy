@@ -22,16 +22,24 @@ class RedisUserinfo:
         return self._db.exists(item)
 
     def get_claims_for(self, user_id, requested_claims):
-        userinfo = json.loads(self._db.get(user_id))
-        del userinfo["sub"]
-        return userinfo
+        return json.loads(self._db.get(user_id))
+
+
+class SimpleSubjectIdentifierFactory:
+    def create_public_identifier(self, user_id):
+        return user_id
+
+    def create_pairwise_identifier(self, user_id, sector_identifier):
+        raise NotImplementedError(
+            "The yes® proxy does not support pairwise identifiers."
+        )
 
 
 def init_yes_proxy(app):
     app.redis_client = FlaskRedis(app)
 
     with app.app_context():
-        issuer = app.yes_proxy_config['issuer']
+        issuer = app.yes_proxy_config["iss"]
         authentication_endpoint = url_for("yes_proxy.authentication_endpoint")
         jwks_uri = url_for("yes_proxy.jwks_uri")
         token_endpoint = url_for("yes_proxy.token_endpoint")
@@ -59,12 +67,12 @@ def init_yes_proxy(app):
     print(json.dumps(configuration_information, indent=2))
 
     userinfo_db = RedisUserinfo(app.redis_client)
-    signing_key = RSAKey(key=rsa_load("key.pem"), alg="RS256")
+    signing_key = RSAKey(key=rsa_load(app.yes_proxy_config["private_key"]), alg="RS256")
     provider = Provider(
         signing_key,
         configuration_information,
         AuthorizationState(
-            HashBasedSubjectIdentifierFactory(app.config["SUBJECT_ID_HASH_SALT"]),
+            SimpleSubjectIdentifierFactory(),
             access_token_lifetime=app.yes_proxy_config["user_data_expiration_seconds"],
         ),
         app.yes_proxy_config["clients"],
