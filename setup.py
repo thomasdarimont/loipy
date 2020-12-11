@@ -23,7 +23,7 @@ setuptools.setup(
         "flask",
         "flask_redis",
         "pyop",
-        "git+https://github.com/yescom/pyyes.git",
+        "pyyes @ git+https://github.com/yescom/pyyes@main#egg=pyyes",
         "pyyaml",
     ],
 )
