@@ -1,9 +1,71 @@
 # LOIPY: Legacy OpenID Connect Integration Proxy for yes®
 
-An OpenID Connect Identity Provider (IDP) proxy which translates "traditional" OpenID Connect requests into requests to the yes® ecosystem, including the bank/account chooser interface.
+An OpenID Connect (OIDC) Identity Provider (IDP) proxy which translates "traditional" OpenID Connect requests into requests to the yes® ecosystem, including the bank/account chooser interface.
 
 **IMPORTANT:** This server is designed to be operated under the control and within the network of a yes® relying party. It is not designed to be made available to arbitrary relying parties over the web. 
 
+**What does this do?**
+
+This software acts as an OpenID Connect IDP to some legacy service and as a yes®-compatible Relying Party to the banks connected to the yes® ecosystem. The following figure shows how LOIPY translates requests from a Legacy service to yes®. Note that the red arrows indicate "classic" OIDC requests and responses. Blue arrows indicate requests and responses according to the yes® specifications and security guidelines.
+
+![Sequence Diagram](./sequence.png)
+
+**User Data Handling**
+
+LOIPY requests user data from the userinfo endpoint of the selected bank and makes it available in the ID token and/or userinfo endpoint for the legacy system. To ensure uniqueness of the user identifiers, the `sub` value presented to the legacy system is a JSON-encoded list containing the user's `sub` value at the bank plus the `iss` (issuer identifier) of the bank.  This value is guaranteed to be unique in the yes® ecosystem and is a stable identifier for the user's account.
+
+The following shows all user data acquired by a legacy system at the userinfo endpoint of LOIPY (line breaks for display purposes only):
+
+```json
+{
+  "https://www.yes.com/claims/preferred_iban":"DE87123456781234567890",
+  "sub":"[\"8b9f9588-4ad1-4069-9c66-7231f79d41c0\", \"https://testidp.sandbox.yes.com/issuer/10000002\"]",
+  "verified_claims":{
+    "claims":{
+      "birthdate":"1996-08-30",
+      "family_name":"Gottschalk",
+      "given_name":"Peter"
+    },
+    "verification":{
+      "trust_framework":"de_aml"
+    }
+  }
+}
+```
+
+All claims supported by yes® can be retrieved through LOIPY. To control which claims are retrieved for a request, the legacy system can use the `scope` parameter. A mapping in the LOIPY configuration file defines which claims are retrieved when a specific `scope` parameter is used.
+
+For example, the data shown above was retrieved for a legacy OIDC authentication request containing `...&scope=openid%20testscope&...`, i.e., the two scopes `openid` and `testscope`. The `openid` scope is only used to designate an OIDC flow and cannot be mapped. The `testscope` scope was mapped in the LOIPY configuration as follows:
+
+```YAML
+scope_to_claims_mapping:
+  testscope: {
+    "https://www.yes.com/claims/preferred_iban":"None",
+    "verified_claims":{
+        "claims":{
+        "birthdate":"None",
+        "family_name":"None",
+        "given_name":"None"
+        },
+        "verification":{
+        "trust_framework":"de_aml"
+        }
+    }
+    }
+```
+(Note: JSON is a subset of YAML syntax. [configuration.example.yml](./configuration.example.yml) shows the same mapping in pure-YAML syntax.)
+
+Only the first non-`openid` scope is evaluated for the mapping. Everything within `testscope:` is used by LOIPY as the contents of the `userinfo` part of the claims parameter. Please consult the [yes® Developer Guide](https://yes.com/docs/rp-devguide/latestversion/IDENTITY/#user_information) to learn which claims can be requested. 
+
+In the same manner, scopes are used to control whether LOIPY requests from the bank's IDP that the user has to use her online banking second factor (SCA, Strong Customer Authentication):
+
+```YAML
+scope_to_sca_mapping:
+  testscope: yes
+  other_scope: no
+```
+
+A true-ish value means that the `acr` value of `https://www.yes.com/acrs/online_banking_sca` is requested, otherwise `https://www.yes.com/acrs/online_banking`. See the yes® Developer Guide for details.
 
 **Prerequisites**
  - Python > 3.6

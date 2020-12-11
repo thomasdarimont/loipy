@@ -1,0 +1,38 @@
+@startuml
+skinparam shadowing false
+skinparam sequenceBoxBackgroundColor white
+skinparam sequenceBoxBorderColor grey
+skinparam sequenceParticipantBorderColor grey
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceLifelineBorderColor grey
+
+participant ub as "User"
+participant Legacy
+participant LOIPY
+participant yac as "yes® Account Chooser"
+participant Bank
+
+ub -> Legacy: Start Login
+Legacy -> ub: Redirect to (Legacy Authentication Request @ LOIPY)
+ub -> LOIPY: Legacy Authentication Request
+LOIPY -[#blue]-> ub: Redirect to (yes® Account Chooser)
+ub -[#blue]-> yac: Load yes® Account Chooser
+ub <-[#blue]-> yac: Select Bank
+yac -[#blue]-> ub: Redirect to (account chooser response @ LOIPY)
+ub -[#blue]-> LOIPY: account chooser response w/ issuer identifier
+LOIPY -[#blue]-> ub: Redirect to (yes® Authentication Request @ Bank)
+ub -[#blue]-> Bank: yes® Authentication Request
+ub <-[#blue]-> Bank: Login, authorization, etc.
+Bank -[#blue]-> ub: Redirect to (Authentication Response @ LOIPY)
+ub -[#blue]-> LOIPY: Authentication Response
+LOIPY -[#blue]-> Bank: Token Request
+Bank -[#blue]-> LOIPY: Token Response
+LOIPY -[#blue]-> Bank: Userinfo Request
+Bank -[#blue]-> LOIPY: Userinfo Response
+LOIPY -> ub: Redirect to (Legacy Authentication Response @ Legacy)
+ub -> Legacy: Legacy Authentication Response
+Legacy -> LOIPY: Legacy Token Request
+LOIPY -> Legacy: Legacy Token Response
+Legacy -> LOIPY: Legacy Userinfo Request
+LOIPY -> Legacy: Legacy Userinfo Response
+@enduml
