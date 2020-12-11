@@ -39,6 +39,9 @@ class SimpleSubjectIdentifierFactory:
 
 def init_yes_proxy(app):
     app.redis_client = FlaskRedis(app)
+    app.config.SESSION_TYPE: "redis"
+    app.config.SESSION_REDIS = app.redis_client
+    app.config.SESSION_PERMANENT: False
 
     with app.app_context():
         issuer = app.yes_proxy_config["iss"]

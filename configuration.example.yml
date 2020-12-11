@@ -26,8 +26,6 @@ flask:
   SESSION_COOKIE_NAME: "yesproxysession"
   SUBJECT_ID_HASH_SALT: TODO
   PREFERRED_URL_SCHEME: "http"
-  SESSION_TYPE: 'redis'
-  SESSION_PERMANENT: False
   REDIS_URL: "redis://localhost:6379/0" # Redis URL for sessions and to cache user data
 
 # OpenID Connect client configuration.
