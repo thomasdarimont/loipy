@@ -22,6 +22,7 @@ setuptools.setup(
     install_requires=[
         "flask",
         "flask_redis",
+        "Flask-Session",
         "pyop",
         "pyyes @ git+https://github.com/yescom/pyyes@main#egg=pyyes",
         "pyyaml",
