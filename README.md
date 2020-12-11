@@ -1,6 +1,6 @@
-# LOIPY: Legacy OpenID Connect Integration Proxy for yes®
+# LOIPY: Lightweight OpenID Connect Integration Proxy for yes®
 
-LOIPY is an OpenID Connect (OIDC) Identity Provider (IDP) proxy which translates "traditional" OpenID Connect requests into requests to the yes® ecosystem, including the bank/account chooser interface.
+LOIPY is an OpenID Connect (OIDC) Identity Provider (IDP) proxy which translates "classic" OpenID Connect requests into requests to the yes® ecosystem, including the bank/account chooser interface.
 
 LOIPY enables relying parties to use the yes® ecosystem if they are lacking support for features needed by yes®, for example, [MTLS for Client Authentication](https://tools.ietf.org/html/rfc8705) or dynamic configuration of issuer URIs.
 
@@ -8,16 +8,16 @@ LOIPY enables relying parties to use the yes® ecosystem if they are lacking sup
 
 ## What does this do?
 
-This software acts as an OpenID Connect IDP to some legacy service and as a yes®-compatible Relying Party to the banks connected to the yes® ecosystem. The following figure shows how LOIPY translates requests from a Legacy service to yes®. Note that the red arrows indicate "classic" OIDC requests and responses. Blue arrows indicate requests and responses according to the yes® specifications and security guidelines.
+This software acts as an OpenID IDP to some existing service (which speaks "traditional" OIDC for user authentication) and as a yes®-compatible Relying Party to the banks connected to the yes® ecosystem. The following figure shows how LOIPY translates requests from the existing service to yes®. Note that the red arrows indicate "classic" OIDC requests and responses. Blue arrows indicate requests and responses according to the yes® specifications and security guidelines.
 
-![Sequence Diagram](./sequence.png)
+![Sequence Diagram](./sequence.svg)
 (Some background calls have been omitted for brevity.)
 
 **User Data Handling**
 
-LOIPY requests user data from the userinfo endpoint of the selected bank and makes it available in the ID token and/or userinfo endpoint for the legacy system. To ensure uniqueness of the user identifiers, the `sub` value presented to the legacy system is a JSON-encoded list containing the user's `sub` value at the bank plus the `iss` (issuer identifier) of the bank.  This value is guaranteed to be unique in the yes® ecosystem and is a stable identifier for the user's account.
+LOIPY requests user data from the userinfo endpoint of the selected bank and makes it available in the ID token and/or userinfo endpoint for the existing service. To ensure uniqueness of the user identifiers, the `sub` value presented to the existing service is a JSON-encoded list containing the user's `sub` value at the bank plus the `iss` (issuer identifier) of the bank.  This value is guaranteed to be unique in the yes® ecosystem and is a stable identifier for the user's account.
 
-The following shows all user data acquired by a legacy system at the userinfo endpoint of LOIPY (line breaks for display purposes only):
+The following shows all user data acquired by an existing service at the userinfo endpoint of LOIPY (line breaks for display purposes only):
 
 ```json
 {
@@ -38,9 +38,9 @@ The following shows all user data acquired by a legacy system at the userinfo en
 
 All claims supported by yes® can be retrieved through LOIPY. Please consult the [yes® Developer Guide, Sections User Information and Verified Claims](https://yes.com/docs/rp-devguide/latestversion/IDENTITY/#user_information) to learn which claims can be requested. 
 
-To control which claims are retrieved for a particular request, the legacy system can use the `scope` parameter. A mapping in the LOIPY configuration file defines which claims are retrieved when a specific `scope` parameter is used.
+To control which claims are retrieved for a particular request, the existing service can use the `scope` parameter. A mapping in the LOIPY configuration file defines which claims are retrieved when a specific `scope` parameter is used.
 
-For example, the data shown above was retrieved for a legacy OIDC authentication request containing `...&scope=openid%20testscope&...`, i.e., the two scopes `openid` and `testscope`. The `openid` scope is only used to designate an OIDC flow and cannot be mapped. The `testscope` scope was mapped in the LOIPY configuration as follows:
+For example, the data shown above was retrieved for a "traditional" OIDC authentication request containing `...&scope=openid%20testscope&...`, i.e., the two scopes `openid` and `testscope`. The `openid` scope is only used to designate an OIDC flow and cannot be mapped. The `testscope` scope was mapped in the LOIPY configuration as follows:
 
 ```YAML
 scope_to_claims_mapping:

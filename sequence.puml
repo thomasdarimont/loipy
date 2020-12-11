@@ -7,14 +7,14 @@ skinparam sequenceParticipantBackgroundColor white
 skinparam sequenceLifelineBorderColor grey
 
 participant ub as "User"
-participant Legacy
+participant Classic
 participant LOIPY
 participant yac as "yes® Account Chooser"
 participant Bank
 
-ub -> Legacy: Start Login
-Legacy -> ub: Redirect to (Legacy Authentication Request @ LOIPY)
-ub -> LOIPY: Legacy Authentication Request
+ub -> Classic: Start Login
+Classic -> ub: Redirect to (Classic Authentication Request @ LOIPY)
+ub -> LOIPY: Classic Authentication Request
 LOIPY -[#blue]-> ub: Redirect to (yes® Account Chooser)
 ub -[#blue]-> yac: Load yes® Account Chooser
 ub <-[#blue]-> yac: Select Bank
@@ -29,10 +29,10 @@ LOIPY -[#blue]-> Bank: Token Request
 Bank -[#blue]-> LOIPY: Token Response
 LOIPY -[#blue]-> Bank: Userinfo Request
 Bank -[#blue]-> LOIPY: Userinfo Response
-LOIPY -> ub: Redirect to (Legacy Authentication Response @ Legacy)
-ub -> Legacy: Legacy Authentication Response
-Legacy -> LOIPY: Legacy Token Request
-LOIPY -> Legacy: Legacy Token Response
-Legacy -> LOIPY: Legacy Userinfo Request
-LOIPY -> Legacy: Legacy Userinfo Response
+LOIPY -> ub: Redirect to (Classic Authentication Response @ Classic)
+ub -> Classic: Classic Authentication Response
+Classic -> LOIPY: Classic Token Request
+LOIPY -> Classic: Classic Token Response
+Classic -> LOIPY: Classic Userinfo Request
+LOIPY -> Classic: Classic Userinfo Response
 @enduml
