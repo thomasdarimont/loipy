@@ -24,7 +24,9 @@ class RedisUserinfo:
         return self._db.exists(item)
 
     def get_claims_for(self, user_id, requested_claims):
-        return json.loads(self._db.get(user_id))
+        userinfo = json.loads(self._db.get(user_id))
+        del userinfo["sub"]
+        return userinfo
 
 
 class SimpleSubjectIdentifierFactory:
@@ -38,10 +40,6 @@ class SimpleSubjectIdentifierFactory:
 
 
 def init_yes_proxy(app):
-    app.redis_client = FlaskRedis(app)
-    app.config.SESSION_TYPE: "redis"
-    app.config.SESSION_REDIS = app.redis_client
-    app.config.SESSION_PERMANENT: False
 
     with app.app_context():
         issuer = app.yes_proxy_config["iss"]
@@ -96,6 +94,10 @@ def yes_proxy_init_app(name=None):
     app = Flask(name)
     app.config.update(**yes_proxy_config["flask"])
     app.yes_proxy_config = yes_proxy_config
+    app.redis_client = FlaskRedis(app)
+    app.config["SESSION_REDIS"] = app.redis_client
+    app.config["SESSION_TYPE"] = "redis"
+    app.config["SESSION_PERMANENT"] = False
     Session(app)
 
     from .views import yes_proxy_views
