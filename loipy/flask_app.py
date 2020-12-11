@@ -4,6 +4,7 @@ import os
 
 from flask.app import Flask
 from flask.helpers import url_for
+from flask.ext.session import Session
 from flask_redis import FlaskRedis
 from jwkest.jwk import RSAKey, rsa_load
 from pyop.authz_state import AuthorizationState
@@ -92,6 +93,7 @@ def yes_proxy_init_app(name=None):
     app = Flask(name)
     app.config.update(**yes_proxy_config["flask"])
     app.yes_proxy_config = yes_proxy_config
+    Session(app)
 
     from .views import yes_proxy_views
 
