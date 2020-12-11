@@ -6,7 +6,7 @@ LOIPY enables relying parties to use the yes® ecosystem if they are lacking sup
 
 **IMPORTANT:** This server is designed to be operated under the control and within the network of a yes® relying party. It is not designed to be made available to arbitrary relying parties over the web. 
 
-**What does this do?**
+## What does this do?
 
 This software acts as an OpenID Connect IDP to some legacy service and as a yes®-compatible Relying Party to the banks connected to the yes® ecosystem. The following figure shows how LOIPY translates requests from a Legacy service to yes®. Note that the red arrows indicate "classic" OIDC requests and responses. Blue arrows indicate requests and responses according to the yes® specifications and security guidelines.
 
@@ -48,15 +48,17 @@ scope_to_claims_mapping:
     "https://www.yes.com/claims/preferred_iban":"None",
     "verified_claims":{
         "claims":{
-        "birthdate":"None",
-        "family_name":"None",
-        "given_name":"None"
+            "birthdate":"None",
+            "family_name":"None",
+            "given_name":"None"
         },
         "verification":{
-        "trust_framework":"de_aml"
+            "trust_framework":{
+                "value":"de_aml"
+            }
         }
     }
-    }
+  }
 ```
 (Note: JSON is a subset of YAML syntax. [configuration.example.yml](./configuration.example.yml) shows the same mapping in pure-YAML syntax.)
 
@@ -72,6 +74,7 @@ scope_to_sca_mapping:
 
 A true-ish value means that the `acr` value of `https://www.yes.com/acrs/online_banking_sca` is requested, otherwise `https://www.yes.com/acrs/online_banking`. See the yes® Developer Guide for details.
 
+## Set-Up and Operation
 **Prerequisites**
  - Python > 3.6
  - The server requires a redis instance to cache user data.
@@ -104,3 +107,30 @@ To run the docker container:
 ```
 docker run -e LOIPY_CONFIG_FILE=/data/configuration.yml -v `pwd`/data:/data loipy
 ```
+**Checking Your Set-Up**
+
+If the webserver is configured correctly, you'll be able to access `https://your-public-address.example/.well-known/openid-configuration` - this URL will show you the available endpoints and other server information.
+
+## License
+
+MIT License
+
+Copyright (c) 2020 yes.com AG
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
