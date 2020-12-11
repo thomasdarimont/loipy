@@ -1,14 +1,18 @@
 import json
 import pickle
+from base64 import b64encode
 from typing import Dict, List, Tuple
 from urllib.parse import urlencode
-from base64 import b64encode
 
 import flask
 import yes
 from flask import Blueprint, current_app, jsonify, redirect, session
 from flask.helpers import make_response
-from oic.oic.message import TokenErrorResponse, UserInfoErrorResponse
+from oic.oic.message import (
+    AuthorizationErrorResponse,
+    TokenErrorResponse,
+    UserInfoErrorResponse,
+)
 from pyop.access_token import AccessToken, BearerTokenError
 from pyop.exceptions import (
     InvalidAccessToken,
@@ -31,16 +35,25 @@ def map_scope(scopes: List) -> Tuple[Dict, bool]:
     service. Also returns a flag indicating if the second factor from the user
     should be requested (SCA)."""
 
+    scope = None
     for s in scopes:
         if s == "openid":
             continue
-        claims = {
-            "userinfo": current_app.yes_proxy_config["scope_to_claims_mapping"][s]
-        }
-        sca = current_app.yes_proxy_config["scope_to_sca_mapping"][s]
-        return claims, sca
+        if scope is None:
+            scope = s
+        else:
+            raise ValueError("Too many scope values.")
+    if scope is None:
+        raise ValueError("Missing scope value")
 
-    raise Exception("Illegal scope value")
+    try:
+        claims = {
+            "userinfo": current_app.yes_proxy_config["scope_to_claims_mapping"][scope]
+        }
+        sca = current_app.yes_proxy_config["scope_to_sca_mapping"][scope]
+    except KeyError:
+        raise ValueError("Scope missing from one of the internal scope mappings.")
+    return claims, sca
 
 
 @yes_proxy_views.route("/yes/auth", methods=["GET"])
@@ -60,8 +73,14 @@ def authentication_endpoint():
             return make_response("Something went wrong: {}".format(str(e)), 400)
 
     # import pdb; pdb.set_trace()
-
-    yessession = yes.YesIdentitySession(*map_scope(auth_req.get("scope")))
+    try:
+        yessession = yes.YesIdentitySession(*map_scope(auth_req.get("scope")))
+    except ValueError:
+        return oauth_error_response(
+            auth_req,
+            "invalid_scope",
+            "Scope contains illegal value or too many values.",
+        )
     yesflow = yes.YesIdentityFlow(current_app.yes_proxy_config["yes"], yessession)
     session["auth_req"] = pickle.dumps(auth_req)
     session["yes"] = pickle.dumps(yessession)
@@ -77,19 +96,31 @@ def account_chooser_callback():
     try:
         authorization_endpoint_uri = yesflow.handle_ac_callback(**flask.request.args)
     except yes.YesUserCanceledError:
-        raise InvalidAuthenticationRequest(
-            "User canceled the bank selection.", auth_req, oauth_error="access_denied"
+        return oauth_error_response(
+            auth_req, "access_denied", "User canceled the bank selection."
         )
     except yes.YesUnknownIssuerError:
-        raise InvalidAuthenticationRequest(
-            "The selected bank is not available.",
+        return oauth_error_response(
             auth_req,
-            oauth_error="temporarily_unavailable",
+            "temporarily_unavailable",
+            "The selected bank is not available.",
         )
     finally:
         session["yes"] = pickle.dumps(yessession)
 
     return redirect(authorization_endpoint_uri, 303)
+
+
+def oauth_error_response(auth_req, oauth_error, oauth_error_description):
+    response = AuthorizationErrorResponse()
+    response["error"] = oauth_error
+    response["error_description"] = oauth_error_description
+    if "state" in auth_req:
+        response["state"] = auth_req["state"]
+    response_url = response.request(
+        auth_req["redirect_uri"], should_fragment_encode(auth_req)
+    )
+    return redirect(response_url, 303)
 
 
 @yes_proxy_views.route("/yes/oidccb", methods=["GET"])
@@ -103,10 +134,8 @@ def oidc_callback():
     except yes.YesAccountSelectionRequested as exception:
         return redirect(exception.redirect_uri, 303)
     except yes.YesOAuthError as exception:
-        raise InvalidAuthenticationRequest(
-            exception.oauth_error_description,
-            auth_req,
-            oauth_error=exception.oauth_error,
+        return oauth_error_response(
+            auth_req, exception.oauth_error, exception.oauth_error_description
         )
     finally:
         session["yes"] = pickle.dumps(yessession)
@@ -114,8 +143,8 @@ def oidc_callback():
     data_id_token = yesflow.send_token_request()
     data_userinfo = yesflow.send_userinfo_request()
     userid = make_userid(data_userinfo["sub"], data_id_token["iss"])
-    
-    data_userinfo['sub'] = userid
+
+    data_userinfo["sub"] = userid
 
     current_app.redis_client.set(
         userid,
