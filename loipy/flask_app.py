@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from flask.app import Flask
 from flask.helpers import url_for
@@ -83,7 +84,7 @@ def init_yes_proxy(app):
 
 
 def yes_proxy_init_app(name=None):
-    with open("configuration.yml", "r") as f:
+    with open(os.environ.get("LOIPY_CONFIG_FILE", "configuration.yml"), "r") as f:
         yes_proxy_config = load(f, Loader=SafeLoader)
     logging.basicConfig(level=yes_proxy_config["log_level"])
 

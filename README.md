@@ -12,7 +12,7 @@ An OpenID Connect Identity Provider (IDP) proxy which translates "traditional" O
 
 **Configuration**
 
-See [configuration.example.yml](./configuration.example.yml). Rename to `configuration.yml`.
+See [configuration.example.yml](./configuration.example.yml). Rename to `configuration.yml` in path or set the environment variable `LOIPY_CONFIG_FILE` to point to the configuration file.
 
 **Running**
 
