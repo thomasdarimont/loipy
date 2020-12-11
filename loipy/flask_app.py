@@ -4,8 +4,8 @@ import os
 
 from flask.app import Flask
 from flask.helpers import url_for
-from flask.ext.session import Session
 from flask_redis import FlaskRedis
+from flask_session import Session
 from jwkest.jwk import RSAKey, rsa_load
 from pyop.authz_state import AuthorizationState
 from pyop.provider import Provider
